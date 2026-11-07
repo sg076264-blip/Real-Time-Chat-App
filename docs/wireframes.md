@@ -1,44 +1,22 @@
+
 # UI Wireframes — Real-Time Chat App
 
 ## 1. Login Screen
+
+### Purpose
+Allows existing users to log in and new users to create an account.
+
+### Elements
 - App name and logo
 - Email input
 - Password input
 - Login button
 - Sign-up link
 
-## 2. Dashboard / Room List
-- User profile
-- Search rooms
-- Create room button
-- Available rooms list
-- Open room option
-
-## 3. Main Chat Screen
-- Room name
-- Online members count
-- Chat message history
-- Sender name and timestamp
-- Typing indicator
-- Message input
-- Send button
-
-## 4. Room Details
-- Room name
-- Room description
-- Members list
-- Online status
-- Leave room button
-
-
-
-# UI Wireframes — Real-Time Chat App
-
-## 1. Login Screen
+### Wireframe
 
 ```text
 +----------------------------------+
-|                                  |
 |             ChatSpace            |
 |      Connect. Chat. Collaborate. |
 |                                  |
@@ -53,17 +31,27 @@
 |           [ LOGIN ]              |
 |                                  |
 |   Don't have an account? Sign Up |
-|                                  |
 +----------------------------------+
 ```
 
 ## 2. Dashboard / Room List
 
+### Purpose
+Allows users to discover, create and access chat rooms.
+
+### Elements
+- User profile
+- Search rooms
+- Create room button
+- Available rooms list
+- Open room option
+
+### Wireframe
+
 ```text
 +------------------------------------------+
 | ChatSpace                       Profile  |
 +------------------------------------------+
-|                                          |
 | Your Rooms                               |
 |                                          |
 | [ Search rooms..................... ]    |
@@ -72,30 +60,40 @@
 |                                          |
 | +--------------------------------------+ |
 | | # General Discussion                 | |
-| |   Room conversation                 | |
 | +--------------------------------------+ |
 |                                          |
 | +--------------------------------------+ |
 | | # Coding Club                        | |
-| |   Room conversation                 | |
 | +--------------------------------------+ |
 |                                          |
 | +--------------------------------------+ |
 | | # College Updates                    | |
-| |   Room conversation                 | |
 | +--------------------------------------+ |
 +------------------------------------------+
 ```
 
 ## 3. Main Chat Screen
 
+### Purpose
+Allows room members to communicate through real-time messages.
+
+### Elements
+- Room name
+- Online members count
+- Chat message history
+- Sender name and timestamp
+- Typing indicator
+- Message input
+- Send button
+
+### Wireframe
+
 ```text
 +------------------------------------------+
 | <   # General Discussion       Members   |
 |     12 Members · 5 Online                |
 +------------------------------------------+
-|                                          |
-|               Today                      |
+|                  Today                   |
 |                                          |
 | Rahul · 10:30 AM                         |
 | +--------------------------------------+ |
@@ -108,7 +106,6 @@
 |          +-----------------------------+ |
 |                                          |
 | Rahul is typing...                      |
-|                                          |
 +------------------------------------------+
 | [ Type a message................ ] [Send]|
 +------------------------------------------+
@@ -116,26 +113,35 @@
 
 ## 4. Room Details
 
+### Purpose
+Displays information about a chat room and its members.
+
+### Elements
+- Room name
+- Room description
+- Members list
+- Online status
+- Leave room button
+
+### Wireframe
+
 ```text
 +------------------------------------------+
 | <              Room Details              |
 +------------------------------------------+
 |                                          |
-|                 #                        |
-|             Coding Club                  |
+|                  #                       |
+|              Coding Club                 |
 |       Discuss coding and development.    |
 |                                          |
 +------------------------------------------+
-|                                          |
 | Room Members (3)                         |
 |                                          |
-|  Rahul                         ● Online  |
-|  Aman                          ● Online  |
-|  You                           ● Online  |
+| Rahul                         ● Online   |
+| Aman                          ● Online   |
+| You                           ● Online   |
 |                                          |
 +------------------------------------------+
-|                                          |
 |              [ Leave Room ]              |
-|                                          |
 +------------------------------------------+
 ```
