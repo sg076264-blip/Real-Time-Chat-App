@@ -1,4 +1,10 @@
-import React, { useMemo, useState } from "react";
+import Auth from "./Auth";
+import {
+  signupUser,
+  loginUser,
+  getCurrentUser
+} from "./api";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Search, MessageCircle, Users, Settings, Home, Plus, MoreHorizontal,
   Paperclip, Smile, Send, Phone, Video, Info, Sun, Moon, CheckCheck,
@@ -28,6 +34,58 @@ function Avatar({ initials, color = "blue", online = false, large = false }) {
 }
 
 export default function App() {
+    // Authentication states
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+
+  // Verify saved login session
+  useEffect(() => {
+    const verifySession = async () => {
+      const token = localStorage.getItem("chatzoToken");
+
+      if (!token) {
+        setAuthLoading(false);
+        return;
+      }
+
+      try {
+        const data = await getCurrentUser(token);
+        setCurrentUser(data.user);
+      } catch (error) {
+        localStorage.removeItem("chatzoToken");
+        setCurrentUser(null);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    verifySession();
+  }, []);
+
+  // Handle Signup
+  async function handleSignup(userData) {
+    const data = await signupUser(userData);
+    return data;
+  }
+
+  // Handle Login
+  async function handleLogin(userData) {
+    const data = await loginUser(userData);
+
+    if (!data.token) {
+      throw new Error("Login token was not received.");
+    }
+
+    localStorage.setItem("chatzoToken", data.token);
+    setCurrentUser(data.user);
+  }
+  function handleLogout() {
+  localStorage.removeItem("chatzoToken");
+  setCurrentUser(null);
+}
+
+
   const [theme, setTheme] = useState("dark");
   const [activeNav, setActiveNav] = useState("Messages");
   const [activeChat, setActiveChat] = useState(1);
@@ -45,7 +103,27 @@ export default function App() {
     setMessages(prev => [...prev, { id: Date.now(), mine: true, text: draft.trim(), time: "Now", seen: false }]);
     setDraft("");
   }
+  // Show loading screen while checking login
+  if (authLoading) {
+    return (
+      <div className="auth-page">
+        <div className="auth-card">
+          <h2>CHATZO</h2>
+          <p>Checking your session...</p>
+        </div>
+      </div>
+    );
+  }
 
+  // Show authentication screen if user is not logged in
+  if (!currentUser) {
+    return (
+      <Auth
+        onLogin={handleLogin}
+        onSignup={handleSignup}
+      />
+    );
+  }
   return (
     <div className={`app ${theme}`}>
       <aside className="rail">
@@ -56,7 +134,23 @@ export default function App() {
         <button className={`rail-btn ${activeNav === "Contacts" ? "active" : ""}`} title="Contacts" onClick={() => setActiveNav("Contacts")}><Users /></button>
         <div className="rail-spacer" />
         <button className={`rail-btn ${activeNav === "Settings" ? "active" : ""}`} title="Settings" onClick={() => setActiveNav("Settings")}><Settings /></button>
-        <button className="rail-profile"><Avatar initials="SG" color="cyan" /></button>
+        <button
+  className="rail-profile"
+  title="Click to logout"
+  onClick={handleLogout}
+>
+  <Avatar
+    initials={
+      (currentUser?.name || "User")
+        .split(" ")
+        .map(word => word[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    }
+    color="cyan"
+  />
+</button>
       </aside>
 
       <aside className="chat-sidebar">
