@@ -1,54 +1,58 @@
-const API = "http://localhost:5001/api";
+const API_BASE = "http://localhost:5001/api";
 
-export const signupUser = async (userData) => {
-  const response = await fetch(`${API}/auth/signup`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(userData),
+async function apiRequest(path, options = {}) {
+  const token = localStorage.getItem("chatzoToken");
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers || {}),
+  };
+
+  const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || data.error || `Request failed (${response.status})`);
+  }
+  return data;
+}
+
+export const signupUser = (userData) =>
+  apiRequest("/auth/signup", { method: "POST", body: JSON.stringify(userData) });
+
+export const loginUser = (userData) =>
+  apiRequest("/auth/login", { method: "POST", body: JSON.stringify(userData) });
+
+export const getCurrentUser = (token) =>
+  apiRequest("/auth/me", {
+    headers: { Authorization: `Bearer ${token}` },
   });
 
-  const data = await response.json();
+export const getRooms = (page = 1, limit = 20) =>
+  apiRequest(`/rooms?page=${page}&limit=${limit}`);
 
-  if (!response.ok) {
-    throw new Error(data.message || "Signup failed");
-  }
+export const searchRooms = (name) =>
+  apiRequest(`/rooms/search?name=${encodeURIComponent(name)}`);
 
-  return data;
-};
+export const getRoomById = (roomId) =>
+  apiRequest(`/rooms/${roomId}`);
 
-export const loginUser = async (userData) => {
-  const response = await fetch(`${API}/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(userData),
+export const getRoomMembers = (roomId) =>
+  apiRequest(`/rooms/${roomId}/members`);
+
+export const createRoom = (roomData) =>
+  apiRequest("/rooms", { method: "POST", body: JSON.stringify(roomData) });
+
+export const joinRoom = (roomId) =>
+  apiRequest(`/rooms/${roomId}/join`, { method: "POST" });
+
+export const leaveRoom = (roomId) =>
+  apiRequest(`/rooms/${roomId}/leave`, { method: "POST" });
+
+export const updateRoom = (roomId, roomData) =>
+  apiRequest(`/rooms/${roomId}`, {
+    method: "PUT",
+    body: JSON.stringify(roomData),
   });
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "Login failed");
-  }
-
-  return data;
-};
-
-export const getCurrentUser = async (token) => {
-  const response = await fetch(`${API}/auth/me`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "Authentication failed");
-  }
-
-  return data;
-};
+export const deleteRoom = (roomId) =>
+  apiRequest(`/rooms/${roomId}`, { method: "DELETE" });

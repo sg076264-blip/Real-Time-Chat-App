@@ -118,3 +118,95 @@ kbd{font-family:inherit;font-size:9px;color:var(--subtle);border:1px solid var(-
 @keyframes slideIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
 @media(max-width:1050px){.chat-sidebar{width:300px}.details-panel{display:none}.messages-area{padding-left:5%;padding-right:5%}.composer-wrap{padding-left:5%;padding-right:5%}}
 @media(max-width:760px){.app{min-height:560px}.rail{width:58px}.chat-sidebar{width:calc(100% - 58px);max-width:none}.conversation{display:none}.app:has(.conversation:focus-within) .conversation{display:flex}.sidebar-top{padding:23px 17px 17px}.search-box{margin-left:15px;margin-right:15px}.filter-row{padding-left:15px}.section-label{padding-left:18px;padding-right:18px}.chat-list{padding:0 8px}}
+
+
+/* Create room modal */
+.create-room-trigger { display: grid; place-items: center; flex: none; }
+.room-modal-backdrop {
+  position: fixed; inset: 0; z-index: 20; display: grid; place-items: center;
+  padding: 20px; background: rgba(2, 8, 18, .72); backdrop-filter: blur(7px);
+}
+.room-modal {
+  width: min(100%, 440px); padding: 25px; border: 1px solid var(--border);
+  border-radius: 20px; background: var(--panel); color: var(--text);
+  box-shadow: 0 25px 80px #0008; display: flex; flex-direction: column; gap: 18px;
+}
+.room-modal-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.room-modal-heading h2 { margin: 7px 0 5px; font-size: 20px; }
+.room-modal-heading p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.room-field { display: flex; flex-direction: column; gap: 8px; color: var(--text); font-size: 12px; font-weight: 650; }
+.room-field span { color: var(--muted); font-weight: 400; }
+.room-field input, .room-field textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 11px; padding: 12px 13px;
+  outline: none; background: var(--bg); color: var(--text); font: inherit; font-size: 12px;
+  resize: vertical;
+}
+.room-field input:focus, .room-field textarea:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px #00d9f51a; }
+.room-modal-actions { display: flex; justify-content: flex-end; gap: 9px; padding-top: 3px; }
+.room-cancel-btn, .room-create-btn {
+  min-height: 40px; padding: 0 16px; border-radius: 10px; font-size: 12px; font-weight: 700;
+}
+.room-cancel-btn { border: 1px solid var(--border); background: var(--surface); color: var(--muted); }
+.room-create-btn { border: 0; color: white; background: linear-gradient(120deg,#1677ff,#00bfe9); }
+.room-create-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Consistent room membership action sizing */
+.membership-btn {
+  min-width: 150px; min-height: 42px; padding: 0 20px; margin-top: 14px;
+  border: 0; border-radius: 12px; display: inline-flex; align-items: center;
+  justify-content: center; white-space: nowrap; line-height: 1;
+  background: linear-gradient(135deg,#1677ff,#00bfe9); color: white;
+  font-size: 12px; font-weight: 700; box-shadow: 0 5px 14px #1677ff35;
+  transition: transform .2s, opacity .2s;
+}
+.membership-btn:not(:disabled):hover { transform: translateY(-1px); }
+.membership-btn:disabled { opacity: .65; cursor: not-allowed; box-shadow: none; }
+@media(max-width:760px) {
+  .room-modal { padding: 21px; }
+}
+
+
+/* Room creator controls */
+.room-owner-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.room-edit-btn,
+.room-delete-btn {
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border, #26364B);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+.room-edit-btn {
+  color: var(--text, #eaf2ff);
+  background: rgba(22, 119, 255, 0.14);
+  border-color: rgba(22, 119, 255, 0.42);
+}
+
+.room-delete-btn {
+  color: #ff7777;
+  background: rgba(255, 75, 75, 0.10);
+  border-color: rgba(255, 100, 100, 0.35);
+}
+
+.room-edit-btn:hover,
+.room-delete-btn:hover {
+  transform: translateY(-1px);
+}
+
+.room-edit-btn:disabled,
+.room-delete-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
