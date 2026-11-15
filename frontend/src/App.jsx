@@ -414,6 +414,11 @@ export default function App() {
               Description <span>(optional)</span>
               <textarea maxLength={250} rows={3} value={newRoomDescription} onChange={(e) => setNewRoomDescription(e.target.value)} placeholder="What is this room about?" />
             </label>
+            {roomError && (
+  <div className="room-error">
+    {roomError}
+  </div>
+)}
             <div className="room-modal-actions">
               <button type="button" className="room-cancel-btn" onClick={() => setShowCreateRoom(false)}>Cancel</button>
               <button type="submit" className="room-create-btn" disabled={createLoading || !newRoomName.trim()}>
@@ -443,6 +448,11 @@ export default function App() {
               Description <span>(optional)</span>
               <textarea maxLength={250} rows={3} value={editRoomDescription} onChange={(e) => setEditRoomDescription(e.target.value)} placeholder="What is this room about?" />
             </label>
+            {roomError && (
+  <div className="room-error">
+    {roomError}
+  </div>
+)}
             <div className="room-modal-actions">
               <button type="button" className="room-cancel-btn" onClick={() => setShowEditRoom(false)} disabled={editLoading}>Cancel</button>
               <button type="submit" className="room-create-btn" disabled={editLoading || !editRoomName.trim()}>
@@ -474,7 +484,7 @@ export default function App() {
           </div>
         </header>
 
-        {roomError && <div className="empty-search" role="alert">{roomError}</div>}
+        {roomError && <div className="room-error" role="alert">{roomError}</div>}
 
         {detailLoading ? (
           <section className="messages-area"><div className="empty-search">Loading room details...</div></section>

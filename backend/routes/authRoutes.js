@@ -127,6 +127,55 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Development Password Reset API
+if (process.env.NODE_ENV !== "production") {
+  router.post("/dev-reset-password", async (req, res) => {
+    try {
+      const { email, newPassword } = req.body;
+
+      if (!email || !newPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "Email and new password are required"
+        });
+      }
+
+      if (newPassword.length < 8) {
+        return res.status(400).json({
+          success: false,
+          message: "Password must be at least 8 characters"
+        });
+      }
+
+      const user = await User.findOne({
+        email: email.trim().toLowerCase()
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found"
+        });
+      }
+
+      user.password = await bcrypt.hash(newPassword, 10);
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        message: "Password reset successfully"
+      });
+
+    } catch (error) {
+      console.error("Password reset error:", error.message);
+
+      return res.status(500).json({
+        success: false,
+        message: "Server error during password reset"
+      });
+    }
+  });
+}
 
 // Protected Profile API
 router.get("/me", protect, async (req, res) => {
