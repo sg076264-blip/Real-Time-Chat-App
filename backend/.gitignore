@@ -1,2 +1,5 @@
 node_modules/
 .env
+backend/testSocket.js
+backend/testSocket2.jstestSocket.js
+testSocket2.js
