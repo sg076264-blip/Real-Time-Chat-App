@@ -137,7 +137,8 @@ io.emit("userOnline", {
 
         const populatedMessage = await Message.findById(newMessage._id)
             .populate("sender", "name");
-
+        console.log("Broadcasting message to room:", roomId);
+console.log("Connected sockets in room:", io.sockets.adapter.rooms.get(roomId)?.size);
         io.to(roomId).emit("newMessage", populatedMessage);
 
         console.log("Message sent in room:", roomId);

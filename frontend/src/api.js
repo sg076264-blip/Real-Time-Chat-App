@@ -56,3 +56,37 @@ export const updateRoom = (roomId, roomData) =>
 
 export const deleteRoom = (roomId) =>
   apiRequest(`/rooms/${roomId}`, { method: "DELETE" });
+
+// Preferences APIs (authenticated via JWT)
+export const getPreferences = () =>
+  apiRequest("/auth/preferences", { method: "GET" });
+
+export const savePreferences = (preferences) =>
+  apiRequest("/auth/preferences", {
+    method: "PUT",
+    body: JSON.stringify({ preferences }),
+  });
+
+export const updateProfile = (profileData) =>
+  apiRequest("/auth/profile", {
+    method: "PUT",
+    body: JSON.stringify(profileData),
+  });
+
+export const changePassword = (passwordData) =>
+  apiRequest("/auth/change-password", {
+    method: "PUT",
+    body: JSON.stringify(passwordData),
+  });
+
+export const forgotPassword = (email) =>
+  apiRequest("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+
+export const resetPassword = (token, newPassword) =>
+  apiRequest("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, newPassword }),
+  });
