@@ -24,6 +24,50 @@ const userSchema = new mongoose.Schema(
     avatar: {
       type: String,
       default: ""
+    },
+
+    phone: {
+      type: String,
+      default: ""
+    },
+
+    preferences: {
+      type: Object,
+      default: {
+        theme: "dark",
+        accentColor: "cyan",
+        customAccent: "#08B9DF",
+        bubbleStyle: "rounded",
+        chatBg: "#020D28",
+        sidebar: "dark",
+        fontSize: "md",
+        onlineStatus: true,
+        lastSeen: true,
+        profileVisibility: "everyone",
+        blockedUsers: [],
+        notifications: {
+          messages: true,
+          sound: true,
+          rooms: true,
+          previews: true,
+        },
+        muted: [],
+        chatPrefs: {
+          enterToSend: true,
+          showTimestamps: true,
+          messagePreview: true,
+        },
+      }
+    },
+
+    resetPasswordToken: {
+      type: String,
+      default: ""
+    },
+
+    resetPasswordExpires: {
+      type: Date,
+      default: null
     }
   },
   {

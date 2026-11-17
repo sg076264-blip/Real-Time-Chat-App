@@ -1,8 +1,15 @@
 import Auth from "./Auth";
+import { socket } from "./socket";
+import Logo from "./components/Logo";
+import SettingsPage from "./components/settings/Settings";
 import {
   signupUser,
   loginUser,
   getCurrentUser,
+  getPreferences,
+  savePreferences,
+  updateProfile,
+  changePassword,
   getRooms,
   searchRooms,
   getRoomById,
@@ -47,6 +54,52 @@ export default function App() {
   // Authentication
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  useEffect(() => {
+  if (!currentUser) return;
+
+  if (!socket.connected) {
+    socket.connect();
+  }
+
+  return () => {
+    socket.disconnect();
+  };
+}, [currentUser]);
+useEffect(() => {
+  function handleConnect() {
+    console.log("CHATZO Socket Connected:", socket.id);
+  }
+
+  function handleConnectError(error) {
+    console.error("CHATZO Socket Error:", error.message);
+  }
+
+  socket.on("connect", handleConnect);
+  socket.on("connect_error", handleConnectError);
+
+  return () => {
+    socket.off("connect", handleConnect);
+    socket.off("connect_error", handleConnectError);
+  };
+}, []);
+
+  useEffect(() => {
+    function handleRoomJoined(data) {
+      console.log("CHATZO Room Joined:", data.roomId);
+    }
+
+    function handleRoomError(error) {
+      console.error("CHATZO Room Error:", error.message);
+    }
+
+    socket.on("roomJoined", handleRoomJoined);
+    socket.on("roomError", handleRoomError);
+
+    return () => {
+      socket.off("roomJoined", handleRoomJoined);
+      socket.off("roomError", handleRoomError);
+    };
+  }, []);
 
   useEffect(() => {
     const verifySession = async () => {
@@ -59,6 +112,16 @@ export default function App() {
       try {
         const data = await getCurrentUser(token);
         setCurrentUser(data.user);
+
+        // Load user preferences after login and apply the saved theme.
+        try {
+          const prefsData = await getPreferences();
+          const prefs = prefsData.preferences || {};
+          setUserSettings((prev) => ({ ...prev, ...prefs }));
+          if (prefs.theme) setTheme(prefs.theme);
+        } catch {
+          // Preferences may not exist yet; keep defaults.
+        }
       } catch {
         localStorage.removeItem("chatzoToken");
         setCurrentUser(null);
@@ -89,8 +152,131 @@ export default function App() {
     setRoomMembers([]);
   }
 
+  async function handleSettingsChange(category, data) {
+    setUserSettings((prev) => ({ ...prev, ...data }));
+    if (category === "appearance") {
+      setTheme(data.theme);
+    }
+    try {
+      await savePreferences({ ...userSettings, ...data });
+    } catch {
+      // Save failure is non-fatal; preferences remain in local state.
+    }
+  }
+
+  async function handleProfileUpdate(category, data) {
+    try {
+      if (category === "account") {
+        const res = await updateProfile({
+          name: data.displayName,
+          phone: data.phone,
+          avatar: data.avatar,
+        });
+        if (res.user) {
+          setCurrentUser((prev) => (prev ? { ...prev, name: res.user.name, avatar: res.user.avatar } : prev));
+        }
+      } else if (category === "password") {
+        await changePassword({
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword,
+        });
+      }
+    } catch {
+      // Update failure is non-fatal; local state remains.
+    }
+  }
+
   // CHATZO UI state
   const [theme, setTheme] = useState("dark");
+  const [userSettings, setUserSettings] = useState({
+    theme: "dark",
+    accentColor: "cyan",
+    customAccent: "#08B9DF",
+    bubbleStyle: "rounded",
+    chatBg: "#020D28",
+    sidebar: "dark",
+    fontSize: "md",
+    chatPrefs: {
+      enterToSend: true,
+      showTimestamps: true,
+      messagePreview: true,
+    },
+    notifications: {
+      messages: true,
+      sound: true,
+      rooms: true,
+      previews: true,
+    },
+    privacy: {
+      onlineStatus: true,
+      lastSeen: true,
+      profileVisibility: "everyone",
+    },
+  });
+
+  const [enteringMessageId, setEnteringMessageId] = useState(null);
+
+  const ACCENT_COLOR_MAP = {
+    cyan: "#08B9DF",
+    blue: "#2563EB",
+    purple: "#7E2FCE",
+    green: "#16A34A",
+    pink: "#DB2777",
+    orange: "#EA580C",
+  };
+
+  const FONT_SIZE_MAP = {
+    sm: "0.875rem",
+    md: "1rem",
+    lg: "1.125rem",
+  };
+
+  // Theme engine: sync saved preferences to CSS custom properties so they
+  // apply immediately across the entire UI.
+  useEffect(() => {
+    const accent =
+      userSettings.accentColor === "custom"
+        ? userSettings.customAccent
+        : ACCENT_COLOR_MAP[userSettings.accentColor] || "#08B9DF";
+
+    // Default chat background based on theme mode
+    const defaultChatBg =
+      userSettings.theme === "light" ? "#f3f7fc" : "#020D28";
+
+    document.documentElement.style.setProperty("--chatzo-accent", accent);
+    document.documentElement.style.setProperty("--chatzo-cyan", "#08B9DF");
+    document.documentElement.style.setProperty(
+      "--chatzo-chat-bg",
+      userSettings.chatBg === "#020D28" ? defaultChatBg : userSettings.chatBg
+    );
+    document.documentElement.style.setProperty(
+      "--chatzo-font-size",
+      FONT_SIZE_MAP[userSettings.fontSize] || "1rem"
+    );
+  }, [userSettings]);
+
+  // Clear entering message ID after animation completes so it only runs once
+  useEffect(() => {
+    if (!enteringMessageId) return;
+    const timer = setTimeout(() => setEnteringMessageId(null), 500);
+    return () => clearTimeout(timer);
+  }, [enteringMessageId]);
+
+  // System Default theme: follow the operating system preference.
+  useEffect(() => {
+    if (userSettings.theme !== "system") return;
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (e) => {
+      setTheme(e.matches ? "dark" : "light");
+    };
+
+    // Initialize based on current OS preference
+    setTheme(media.matches ? "dark" : "light");
+
+    media.addEventListener("change", handleChange);
+    return () => media.removeEventListener("change", handleChange);
+  }, [userSettings.theme]);
   const [activeNav, setActiveNav] = useState("Messages");
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
@@ -101,6 +287,69 @@ export default function App() {
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [roomMembers, setRoomMembers] = useState([]);
+
+  // Join the selected room, including when the socket connects after room loading.
+  useEffect(() => {
+    if (!selectedRoom?._id) return;
+
+    const joinSelectedRoom = () => {
+      socket.emit("joinRoom", selectedRoom._id);
+    };
+
+    if (socket.connected) {
+      joinSelectedRoom();
+    }
+
+    socket.on("connect", joinSelectedRoom);
+
+    return () => {
+      socket.off("connect", joinSelectedRoom);
+    };
+  }, [selectedRoom]);
+
+  // Receive messages from the currently selected room in real time.
+  useEffect(() => {
+    function handleNewMessage(message) {
+      const messageRoomId =
+        typeof message.room === "string" ? message.room : message.room?._id;
+
+      if (!selectedRoom?._id || String(messageRoomId) !== String(selectedRoom._id)) {
+        return;
+      }
+
+      const senderId = message.sender?._id || message.sender;
+      const currentUserId = currentUser?.id || currentUser?._id;
+
+      const formattedMessage = {
+        id: message._id,
+        mine: String(senderId) === String(currentUserId),
+        text: message.text,
+        author: message.sender?.name || "Unknown",
+        time: message.createdAt
+          ? new Date(message.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "Now",
+      };
+
+      setMessages((prev) => [...prev, formattedMessage]);
+      setEnteringMessageId(message._id);
+    }
+
+    function handleMessageError(error) {
+      setRoomError(error?.message || "Unable to send message.");
+    }
+
+    socket.on("newMessage", handleNewMessage);
+    socket.on("messageError", handleMessageError);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+      socket.off("messageError", handleMessageError);
+    };
+  }, [currentUser, selectedRoom]);
+
   const [roomsLoading, setRoomsLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [roomError, setRoomError] = useState("");
@@ -146,6 +395,8 @@ export default function App() {
   async function selectRoom(roomId) {
     setDetailLoading(true);
     setRoomError("");
+    setMessages([]);
+    setEnteringMessageId(null);
 
     try {
       const [roomData, memberData] = await Promise.all([
@@ -154,7 +405,8 @@ export default function App() {
       ]);
       setSelectedRoom(roomData.room);
       setRoomMembers(memberData.members || []);
-      setMessages(startingMessages);
+      setMessages([]);
+      setEnteringMessageId(null);
     } catch (error) {
       setRoomError(error.message || "Unable to load room details.");
     } finally {
@@ -297,11 +549,21 @@ export default function App() {
 
   function sendMessage(e) {
     e.preventDefault();
-    if (!draft.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), mine: true, text: draft.trim(), time: "Now" },
-    ]);
+
+    const messageText = draft.trim();
+
+    if (!messageText || !selectedRoom || !isMember) return;
+
+    if (!socket.connected) {
+      setRoomError("Not connected to the chat server. Please try again.");
+      return;
+    }
+
+    setRoomError("");
+    socket.emit("sendMessage", {
+      roomId: selectedRoom._id,
+      text: messageText,
+    });
     setDraft("");
   }
 
@@ -329,8 +591,7 @@ export default function App() {
     <div className={`app ${theme}`}>
       <aside className="rail">
         <div className="brand-mark">
-          <MessageCircle size={22} strokeWidth={2.6} />
-          <span className="brand-dot">•••</span>
+          <Logo size={30} />
         </div>
         <div className="rail-separator" />
         <button className={`rail-btn ${activeNav === "Home" ? "active" : ""}`} title="Home" onClick={() => setActiveNav("Home")}><Home /></button>
@@ -338,12 +599,85 @@ export default function App() {
         <button className={`rail-btn ${activeNav === "Contacts" ? "active" : ""}`} title="Contacts" onClick={() => setActiveNav("Contacts")}><Users /></button>
         <div className="rail-spacer" />
         <button className={`rail-btn ${activeNav === "Settings" ? "active" : ""}`} title="Settings" onClick={() => setActiveNav("Settings")}><Settings /></button>
-        <button className="rail-profile" title="Click to logout" onClick={handleLogout}>
+        <button className="rail-profile" title="Profile" onClick={() => setActiveNav("Profile")}>
           <Avatar initials={getInitials(currentUser.name || "User")} color="cyan" />
         </button>
       </aside>
 
-      <aside className="chat-sidebar">
+      {activeNav === "Settings" ? (
+        <SettingsPage currentUser={currentUser} onUpdate={handleProfileUpdate} onSettingsChange={handleSettingsChange} onLogout={handleLogout} />
+      ) : activeNav === "Home" ? (
+        <div className="home-page">
+          <div className="home-header">
+            <div className="home-greeting">
+              <h1>Welcome back, {currentUser?.name || "User"}!</h1>
+              <p>Here's what's happening in CHATZO today.</p>
+            </div>
+            <button className="btn btn-primary" onClick={() => setActiveNav("Messages")}>
+              Go to Messages <Send size={16} />
+            </button>
+          </div>
+          <div className="home-stats">
+            <div className="stat-card">
+              <span className="stat-label">Total Rooms</span>
+              <span className="stat-value">{rooms.length}</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Your Rooms</span>
+              <span className="stat-value">{selectedRoom ? "1 selected" : "None"}</span>
+            </div>
+          </div>
+          <div className="home-actions">
+            <h3>Quick Actions</h3>
+            <div className="action-grid">
+              <button className="action-btn" onClick={() => { setRoomError(""); setShowCreateRoom(true); }}>
+                <Plus size={18} /> Create Room
+              </button>
+              <button className="action-btn" onClick={() => setActiveNav("Messages")}>
+                <MessageCircle size={18} /> Browse Rooms
+              </button>
+              <button className="action-btn coming-soon" disabled>
+                <Users size={18} /> Contacts
+              </button>
+              <button className="action-btn" onClick={() => setActiveNav("Settings")}>
+                <Settings size={18} /> App Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : activeNav === "Contacts" ? (
+        <div className="coming-soon-page">
+          <div className="coming-soon-card">
+            <Users size={48} />
+            <h2>Contacts</h2>
+            <p>Contact management is coming soon.</p>
+            <button className="btn btn-primary" onClick={() => setActiveNav("Messages")}>
+              Go back to Messages <Send size={16} />
+            </button>
+          </div>
+        </div>
+      ) : activeNav === "Profile" ? (
+        <div className="profile-page">
+          <div className="profile-card">
+            <div className="profile-avatar">
+              <Avatar initials={getInitials(currentUser.name || "User")} color="cyan" large />
+            </div>
+            <h2>{currentUser.name}</h2>
+            <p className="profile-email">{currentUser.email}</p>
+            <p className="profile-id">Account ID: {currentUser.id}</p>
+            <div className="profile-actions">
+              <button className="btn btn-primary" onClick={() => setActiveNav("Settings")} style={{ width: "100%" }}>
+                Edit Profile in Settings
+              </button>
+              <button className="btn btn-outline" onClick={() => setActiveNav("Messages")} style={{ width: "100%", marginTop: 8 }}>
+                Back to Messages
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "contents" }}>
+          <aside className="chat-sidebar">
         <div className="sidebar-top">
           <div>
             <div className="eyebrow">YOUR SPACE</div>
@@ -380,7 +714,9 @@ export default function App() {
                   <strong>{room.name}</strong>
                   <span>{room.members?.length ?? ""}</span>
                 </div>
-                <div className="chat-preview">{room.description || "No description"}</div>
+                {userSettings.chatPrefs.messagePreview && (
+                  <div className="chat-preview">{room.description || "No description"}</div>
+                )}
               </div>
             </button>
           ))}
@@ -478,7 +814,11 @@ export default function App() {
             {selectedRoom && (
               <button className="icon-btn" title="Room members" onClick={() => setShowDetails(!showDetails)}><Info /></button>
             )}
-            <button className="icon-btn theme-toggle" title="Toggle theme" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            <button className="icon-btn theme-toggle" title="Toggle theme" onClick={() => {
+              const next = theme === "dark" ? "light" : "dark";
+              setTheme(next);
+              setUserSettings((prev) => ({ ...prev, theme: next }));
+            }}>
               {theme === "dark" ? <Sun /> : <Moon />}
             </button>
           </div>
@@ -487,9 +827,9 @@ export default function App() {
         {roomError && <div className="room-error" role="alert">{roomError}</div>}
 
         {detailLoading ? (
-          <section className="messages-area"><div className="empty-search">Loading room details...</div></section>
+          <section className={`messages-area bubble-style-${userSettings.bubbleStyle} chat-bg-custom`}><div className="empty-search">Loading room details...</div></section>
         ) : selectedRoom ? (
-          <section className="messages-area">
+          <section className={`messages-area bubble-style-${userSettings.bubbleStyle} chat-bg-custom`}>
             <div className="message-intro">
               <div className="intro-icon"><Users size={20} /></div>
               <strong>{selectedRoom.name}</strong>
@@ -510,17 +850,22 @@ export default function App() {
             </div>
             <div className="date-divider"><span /><p>ROOM PREVIEW</p><span /></div>
             {messages.map((msg) => (
-              <div key={msg.id} className={`message-row ${msg.mine ? "mine" : ""}`}>
+              <div
+                key={msg.id}
+                className={`message-row ${msg.mine ? "mine" : ""}${
+                  msg.id === enteringMessageId ? " message-entering" : ""
+                }`}
+              >
                 <div className="message-content">
                   {!msg.mine && <span className="message-author">{msg.author}</span>}
                   <div className="bubble">{msg.text}</div>
-                  <div className="message-meta"><span>{msg.time}</span>{msg.mine && <CheckCheck size={14} className="read-check" />}</div>
+                  <div className="message-meta">{userSettings.chatPrefs.showTimestamps && <span>{msg.time}</span>}{msg.mine && <CheckCheck size={14} className="read-check" />}</div>
                 </div>
               </div>
             ))}
           </section>
         ) : (
-          <section className="messages-area">
+          <section className={`messages-area bubble-style-${userSettings.bubbleStyle} chat-bg-custom`}>
             <div className="message-intro">
               <div className="intro-icon"><MessageCircle size={20} /></div>
               <strong>No room selected</strong>
@@ -533,11 +878,35 @@ export default function App() {
           <div className="composer">
             <button type="button" className="composer-tool" title="Attach file" disabled><Paperclip /></button>
             <button type="button" className="composer-tool" title="Add image" disabled><Image /></button>
-            <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={selectedRoom ? `Message ${selectedRoom.name}... (preview only)` : "Select a room first"} disabled={!selectedRoom} />
+            <input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !userSettings.chatPrefs.enterToSend) {
+                  e.preventDefault();
+                }
+              }}
+              placeholder={
+                !selectedRoom
+                  ? "Select a room first"
+                  : !isMember
+                    ? "Join this room to send messages"
+                    : `Message ${selectedRoom.name}...`
+              }
+              disabled={!selectedRoom || !isMember}
+            />
             <button type="button" className="composer-tool emoji" title="Emoji" disabled><Smile /></button>
-            <button type="submit" className="send-btn" disabled={!draft.trim() || !selectedRoom}><Send size={17} /></button>
+            <button type="submit" className="send-btn" disabled={!draft.trim() || !selectedRoom || !isMember || !socket.connected}><Send size={17} /></button>
           </div>
-          <div className="composer-hint"><span>Messages are local preview only until Socket.IO integration.</span></div>
+          <div className="composer-hint">
+            <span>
+              {!socket.connected
+                ? "Connecting to chat server..."
+                : isMember
+                  ? "Connected · Real-time messaging enabled"
+                  : "Join this room to participate in the conversation."}
+            </span>
+          </div>
         </form>
       </main>
 
@@ -571,6 +940,8 @@ export default function App() {
             {roomMembers.length === 0 && <p>No members found.</p>}
           </div>
         </aside>
+      )}
+        </div>
       )}
     </div>
   );
