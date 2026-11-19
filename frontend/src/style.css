@@ -87,11 +87,70 @@ kbd{font-family:inherit;font-size:9px;color:var(--subtle);border:1px solid var(-
 .message-row.mine .bubble{background:linear-gradient(135deg,var(--chatzo-accent,#08B9DF),var(--chatzo-cyan,#007fdc));border-color:transparent;color:white;border-radius:14px 4px 14px 14px;box-shadow:0 6px 16px rgba(8,185,223,0.20)}
 .message-meta{display:flex;align-items:center;gap:5px;color:var(--subtle);font-size:8px;margin:5px 3px 0}
 .read-check{color:var(--chatzo-accent)}
-.typing-row{display:flex;align-items:center;gap:8px;margin-left:38px;color:var(--subtle);font-size:9px}
-.typing-avatar{width:25px;height:25px;border-radius:9px;background:#c45a91;color:white;display:grid;place-items:center;font-size:8px;font-weight:700}
-.typing-bubble{display:flex;gap:3px;align-items:center;padding:10px 11px;border-radius:10px;background:var(--bubble);border:1px solid var(--border)}
-.typing-bubble i{width:4px;height:4px;border-radius:50%;background:var(--muted);animation:pulse 1s infinite}
-.typing-bubble i:nth-child(2){animation-delay:.15s}.typing-bubble i:nth-child(3){animation-delay:.3s}
+
+/* WhatsApp-style typing indicator */
+
+.typing-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 4px 0;
+  margin-left: 0;
+  color: var(--muted);
+}
+
+.typing-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  max-width: 80%;
+  border-radius: 4px 14px 14px 14px;
+  background: var(--bubble);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.typing-text {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.typing-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.typing-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--chatzo-accent);
+  animation: chatzoTyping 1s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes chatzoTyping {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
 .composer-wrap{padding:12px 7.5% 22px;flex:none}
 .composer{min-height:57px;border:1px solid var(--border);border-radius:15px;background:var(--panel);display:flex;align-items:center;gap:5px;padding:7px 8px 7px 12px;box-shadow:var(--shadow);transition:.2s}
 .composer:focus-within{border-color:var(--chatzo-accent);box-shadow:0 0 0 3px rgba(8,185,223,0.10),var(--shadow)}
@@ -760,3 +819,126 @@ html {
   }
 }
 
+
+/* CHATZO — Private Contacts */
+
+.contacts-page {
+  flex: 1;
+  min-width: 0;
+  padding: 40px;
+  overflow-y: auto;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.contacts-header h1 {
+  margin: 10px 0 6px;
+  font-size: 28px;
+}
+
+.contacts-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.contacts-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 650px;
+  height: 52px;
+  margin: 30px 0;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--panel);
+  color: var(--muted);
+}
+
+.contacts-search:focus-within {
+  border-color: var(--accent);
+}
+
+.contacts-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+.contacts-search span {
+  font-size: 10px;
+}
+
+.contacts-results {
+  max-width: 650px;
+}
+
+.contacts-results h3 {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--subtle);
+}
+
+.contact-result {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px;
+  margin: 10px 0;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--panel);
+}
+
+.contact-result .chat-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.contact-result .chat-copy strong {
+  font-size: 13px;
+}
+
+.contact-result .chat-copy span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.contact-message-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: white;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.contact-message-btn:disabled {
+  opacity: .5;
+  cursor: wait;
+}
+
+.contacts-back {
+  margin-top: 25px;
+}
+
+@media (max-width: 600px) {
+  .contacts-page {
+    padding: 22px 15px;
+  }
+
+  .contact-result {
+    gap: 8px;
+    padding: 9px;
+  }
+}

@@ -90,3 +90,19 @@ export const resetPassword = (token, newPassword) =>
     method: "POST",
     body: JSON.stringify({ token, newPassword }),
   });
+
+// Private Conversation APIs
+export const getConversations = () =>
+  apiRequest("/conversations", {
+    method: "GET",
+  });
+
+export const createConversation = (userId) =>
+  apiRequest("/conversations", {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
+export const searchUsers = (name) =>
+  apiRequest(
+    `/conversations/users/search?name=${encodeURIComponent(name)}`
+  );

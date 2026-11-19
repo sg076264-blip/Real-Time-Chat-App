@@ -559,3 +559,63 @@
     font-size: 22px;
   }
 }
+/* WhatsApp-style typing indicator */
+
+.typing-row {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 8px 16px 12px;
+  box-sizing: border-box;
+}
+
+.typing-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 15px;
+  max-width: 80%;
+  border-radius: 18px 18px 18px 5px;
+  background: var(--chatzo-accent);
+  color: #ffffff;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+}
+
+.typing-text {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.typing-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.typing-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: chatzoTyping 1s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes chatzoTyping {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
